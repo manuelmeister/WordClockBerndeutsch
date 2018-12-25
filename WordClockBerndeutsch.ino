@@ -1,4 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////
+//
+// v1.0.0
 //
 // LOLIN (WEMOS) D1 mini Lite (ESP8266) Wordclock Program
 // Based on sripts and snippets from:
@@ -9,7 +11,7 @@
 // Kurt Meister, 2018-12-24
 // Thanks to Manuel Meister for refactoring and adding automated summertime conversion.
 //
-/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////
 
 #include <ESP8266WiFi.h> // v2.4.2
 #include <WiFiManager.h> // v0.14.0
@@ -32,9 +34,9 @@ int counter = 0;
 
 boolean showMinuteTicks = true;
 
-unsigned int localPort = 2390;            // local port to listen for UDP packets
+unsigned int localPort = 2390;      // local port to listen for UDP packets
 
-IPAddress timeServerIP;                   // time.nist.gov NTP server address
+IPAddress timeServerIP; // time.nist.gov NTP server address
 const char *ntpServerName = "time.nist.gov";
 
 const int WORDCLOCK_NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
@@ -42,7 +44,7 @@ const int WORDCLOCK_NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 b
 byte packetBuffer[WORDCLOCK_NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 
 //Central European Time (Frankfurt, Paris)
-TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};    //Central European Summer Time
+TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     //Central European Summer Time
 TimeChangeRule CET = {"CET", Last, Sun, Oct, 3, 60};       //Central European Standard Time
 Timezone CE(CEST, CET);
 time_t timeWithDST;
@@ -85,10 +87,10 @@ int WordNeun[] = {81, 80, 79, 78, -1};                 // NÜNI
 int WordZehn[] = {89, 90, 91, 92, -1};                 // ZÄNI
 int WordElf[] = {93, 94, 95, 96, -1};                  // EUFI
 int WordZwoelf[] = {106, 105, 104, 103, 102, 101, -1}; // ZWÖUFI
-int WordMinEins[] = {113, -1};                         // *
-int WordMinZwei[] = {113, 114, -1};                    // **
-int WordMinDrei[] = {113, 114, 116, -1};               // ***
-int WordMinVier[] = {113, 114, 116, 117, -1};          // ****
+int WordMinEins[] = {113, -1};                    // *
+int WordMinZwei[] = {113, 114, -1};               // **
+int WordMinDrei[] = {113, 114, 116, -1};          // ***
+int WordMinVier[] = {113, 114, 116, 117, -1};     // ****
 
 int *WordStunden[] = {
   WordZwoelf,
@@ -123,42 +125,6 @@ uint32_t Blue = pixels.Color(0, 20, 85);
 uint32_t foreground = White;
 uint32_t background = Black;
 
-
-int WortWifi[] = {49, 60, 59, 73, -1};
-int WortConnect[] = {21, 19, 18, 36, 35, 34, 52, 55, -1};
-
-
-void blank() {
-  //clear the decks
-  for (int x = 0; x < NUMPIXELS; ++x) {
-    pixels.setPixelColor(x, background);
-  }
-}
-
-void showConnectWLAN() {
-  blank();
-  for (int wifiindex = 0; wifiindex < 5; wifiindex++) {
-    if(WortWifi[wifiindex] == -1) {
-      break;
-    }
-    Serial.print("Wifibuchstaben: ");
-    Serial.println(wifiindex);
-    pixels.setPixelColor(WortWifi[wifiindex], Blue);
-    pixels.show();
-    delay(250);
-  }
-  for (int connectindex = 0; connectindex < 9; connectindex++) {
-    if(WortConnect[connectindex] == -1) {
-      break;
-    }
-    Serial.print("Connectbuchstaben: ");
-    Serial.println(connectindex);
-    pixels.setPixelColor(WortConnect[connectindex], White);
-    pixels.show();
-    delay(250);
-  }
-}
-
 void setup() {
   pixels.begin();
   blank();
@@ -166,9 +132,6 @@ void setup() {
 
   wifi_station_set_hostname("wordclock");
 
-  // Displays Wifi Connect screen
-  showConnectWLAN();
-  
   // WiFiManager
   // Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
@@ -179,6 +142,8 @@ void setup() {
   // set custom ip for portal
   //wifiManager.setAPConfig(IPAddress(10,0,1,1), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
 
+  // Displays Wifi Connect screen
+  connectWLAN();
 
   // fetches ssid and pass from eeprom and tries to connect
   // if it does not connect it starts an access point with the specified name
@@ -286,13 +251,36 @@ void lightup(int Word[], uint32_t Colour) {
   } //end of for loop
 }
 
-// Basic Strip test
+void blank() {
+  //clear the decks
+  for (int x = 0; x < NUMPIXELS; ++x) {
+    pixels.setPixelColor(x, background);
+  }
+}
+
 static void chase(uint32_t c) {
   for (uint16_t i = 0; i < pixels.numPixels() + 4; i++) {
     pixels.setPixelColor(i, c); // Draw new pixel
     pixels.setPixelColor(i - 4, 0); // Erase pixel a few steps back
     pixels.show();
     delay(25);
+  }
+}
+
+int WortWifi[] = {49, 60, 59, 73};
+int WortConnect[] = {21, 19, 18, 36, 35, 34, 52, 55};
+
+static void connectWLAN() {
+  blank();
+  for (int i = 0; i < 5; ++i) {
+    pixels.setPixelColor(WortWifi[i], Blue);
+    pixels.show();
+    delay(250);
+  }
+  for (int i = 0; i < 8; ++i) {
+    pixels.setPixelColor(WortConnect[i], White);
+    pixels.show();
+    delay(250);
   }
 }
 
@@ -325,7 +313,6 @@ void printMinute() {
 
 void loop() {
   if (counter == 0) {
-
     getTimefromNTP();
   } else {
     if (counter < 250) {
