@@ -16,6 +16,8 @@
  *
  */
 
+char version[] = "1.1.2"
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h> // v2.4.2
 #include <WiFiManager.h> // v0.14.0
@@ -415,9 +417,12 @@ void displayTime() {
 }
 
 void setup() {
+  Serial.begin(115200);
   pixels.begin();
   wipe();
-  Serial.begin(115200);
+  Serial.println("");
+  Serial.print("Wordclock Version: v");
+  Serial.println(version);
 
   setupWifi();
   setupTime();
