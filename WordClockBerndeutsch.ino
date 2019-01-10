@@ -1,6 +1,6 @@
 /**
  *
- * v1.1.1
+ * v1.1.2
  *
  * LOLIN (WEMOS) D1 mini Lite (ESP8266) Wordclock Program
  * Based on sripts and snippets from:
