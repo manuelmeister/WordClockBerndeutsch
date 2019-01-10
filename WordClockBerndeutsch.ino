@@ -1,18 +1,22 @@
-/////////////////////////////////////////////
-//
-// v1.0.0
-//
-// LOLIN (WEMOS) D1 mini Lite (ESP8266) Wordclock Program
-// Based on sripts and snippets from:
-// Rui Santos http://randomnerdtutorials.com
-// neotrace https://www.instructables.com/id/WORK-IN-PROGRESS-Ribba-Word-Clock-With-Wemos-D1-Mi/
-// and others
-//
-// Kurt Meister, 2018-12-24
-// Thanks to Manuel Meister for refactoring and adding automated summertime conversion.
-//
-/////////////////////////////////////////////
+/**
+ *
+ * v1.1.1
+ *
+ * LOLIN (WEMOS) D1 mini Lite (ESP8266) Wordclock Program
+ * Based on sripts and snippets from:
+ * Rui Santos http://randomnerdtutorials.com
+ * neotrace https://www.instructables.com/id/WORK-IN-PROGRESS-Ribba-Word-Clock-With-Wemos-D1-Mi/
+ * and others
+ *
+ * Kurt Meister, 2018-12-24
+ * Thanks to Manuel Meister for refactoring and adding automated summertime conversion.
+ *
+ * Changelog:
+ * 2019-01-07 Changed to PaulStoffregen TimeLib Code because NTPClient seems to run into long time errors
+ *
+ */
 
+#include <Arduino.h>
 #include <ESP8266WiFi.h> // v2.4.2
 #include <WiFiManager.h> // v0.14.0
 #include <WiFiUdp.h>
@@ -28,20 +32,28 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 
 #define DEBUG_ON
 
-int hourWordclock;
-int minuteWordclock;
-int counter = 0;
+int secondWordclock = 0;
+int minuteWordclock = 0;
+int hourWordclock = 0;
+int lastMinuteWordClock = 61;
 
-boolean showMinuteTicks = true;
+const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
+byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
+static const char ntpServerName[] = "0.ch.pool.ntp.org";
 
-unsigned int localPort = 2390;      // local port to listen for UDP packets
+const int timeZone = 0;     // Central European Time
 
-IPAddress timeServerIP; // time.nist.gov NTP server address
-const char *ntpServerName = "time.nist.gov";
+bool showMinuteTicks = true;
 
-const int WORDCLOCK_NTP_PACKET_SIZE = 48; // NTP time stamp is in the first 48 bytes of the message
 
-byte packetBuffer[WORDCLOCK_NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+// function definitions
+time_t getNtpTime();
+
+void formatDigits(int digits);
+
+void serialTime();
+
+void sendNTPpacket(IPAddress &address);
 
 //Central European Time (Frankfurt, Paris)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     //Central European Summer Time
@@ -50,6 +62,7 @@ Timezone CE(CEST, CET);
 time_t timeWithDST;
 
 WiFiUDP ntpUDP;
+unsigned int localPort = 8888;  // local port to listen for UDP packets
 
 /*
 | Ä | S |   | I | S | C | H |   | F | Ü | F |
@@ -116,20 +129,109 @@ int *WordMinuten[] = {
 };
 
 //define colours
-uint32_t Black = pixels.Color(0, 0, 0);
-uint32_t White = pixels.Color(49, 52, 34);
-uint32_t Green = pixels.Color(10, 90, 0);
-uint32_t Red = pixels.Color(90, 0, 0);
-uint32_t Blue = pixels.Color(0, 20, 85);
+uint32_t Black = Adafruit_NeoPixel::Color(0, 0, 0);
+uint32_t White = Adafruit_NeoPixel::Color(49, 52, 34);
+uint32_t Green = Adafruit_NeoPixel::Color(10, 90, 0);
+uint32_t Red = Adafruit_NeoPixel::Color(90, 0, 0);
+uint32_t Blue = Adafruit_NeoPixel::Color(0, 20, 85);
 
 uint32_t foreground = White;
 uint32_t background = Black;
 
-void setup() {
-  pixels.begin();
-  blank();
-  Serial.begin(115200);
 
+/**
+ * Print time via serial output
+ */
+void serialTime() {
+  // digital clock display of the time
+  formatDigits(hourWordclock);
+  Serial.print(":");
+  formatDigits(minuteWordclock);
+  Serial.print(":");
+  formatDigits(secondWordclock);
+  Serial.println();
+}
+
+/**
+ * utility for digital clock display: prints preceding colon and leading 0
+ * @param digits
+ */
+void formatDigits(int digits) {
+  if (digits < 10)
+    Serial.print('0');
+  Serial.print(digits);
+}
+
+/**
+ * Sets array of pixels to a specific color
+ * @param Word
+ * @param Colour
+ */
+void lightup(int Word[], uint32_t Colour) {
+  for (int x = 0; x < pixels.numPixels() + 1; x++) {
+    if (Word[x] == -1) {
+      break;
+    } else {
+      pixels.setPixelColor(Word[x], Colour);
+    }
+  }
+}
+
+/**
+ * Sets all pixels to the background
+ */
+void blank() {
+  for (int x = 0; x < NUMPIXELS; ++x) {
+    pixels.setPixelColor(x, background);
+  }
+}
+
+/**
+ * Sets all pixels to the background and displays it
+ */
+void wipe() {
+  blank();
+  pixels.show();
+}
+
+/**
+ * Snail runs throug all pixels
+ * @param color Color of the snail
+ */
+static void chase(uint32_t color) {
+  for (uint16_t i = 0; i < pixels.numPixels() + 4; i++) {
+    pixels.setPixelColor(i, color); // Draw new pixel
+    pixels.setPixelColor(i - 4, background); // Erase pixel a few steps back
+    pixels.show();
+    delay(25);
+  }
+}
+
+/**
+ * Displays the prompt to connect to wifi
+ */
+static void connectWLAN() {
+  blank();
+
+  int WortWifi[] = {49, 60, 59, 73};
+  int WortConnect[] = {21, 19, 18, 36, 35, 34, 52, 55};
+
+  for (int i : WortWifi) {
+    pixels.setPixelColor(i, Blue);
+    pixels.show();
+    delay(250);
+  }
+  for (int i : WortConnect) {
+    pixels.setPixelColor(i, White);
+    pixels.show();
+    delay(250);
+  }
+}
+
+/**
+ * Sets up wifi
+ */
+void setupWifi() {
   wifi_station_set_hostname("wordclock");
 
   // WiFiManager
@@ -155,20 +257,45 @@ void setup() {
 
   // if you get here you have connected to the WiFi
   Serial.println("Connected.");
+}
 
-  Serial.println("Starting UDP");
-  ntpUDP.begin(localPort);
-  Serial.print("Local port: ");
-  Serial.println(ntpUDP.localPort());
+time_t getNtpTime() {
+  IPAddress ntpServerIP; // NTP server's ip address
 
-  chase(pixels.Color(0, 100, 0)); // run basic screen test
+  while (ntpUDP.parsePacket() > 0); // discard any previously received packets
+  Serial.println("Transmit NTP Request");
+  // get a random server from the pool
+  WiFi.hostByName(ntpServerName, ntpServerIP);
+  Serial.print(ntpServerName);
+  Serial.print(": ");
+  Serial.println(ntpServerIP);
+  sendNTPpacket(ntpServerIP);
+  uint32_t beginWait = millis();
+  while (millis() - beginWait < 2500) {
+    int size = ntpUDP.parsePacket();
+    if (size >= NTP_PACKET_SIZE) {
+      Serial.println("Receive NTP Response...");
+      ntpUDP.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+      unsigned long secsSince1900;
+      // convert four bytes starting at location 40 to a long integer
+      secsSince1900 = (unsigned long) packetBuffer[40] << 24;
+      secsSince1900 |= (unsigned long) packetBuffer[41] << 16;
+      secsSince1900 |= (unsigned long) packetBuffer[42] << 8;
+      secsSince1900 |= (unsigned long) packetBuffer[43];
+      Serial.print("Received: ");
+      Serial.println(secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR);
+      setSyncInterval(300);
+      return secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR;
+    }
+  }
+  Serial.println("No NTP Response :-(");
+  return 0; // return 0 if unable to get the time (Timelib just queries again)
 }
 
 // send an NTP request to the time server at the given address
-unsigned long sendNTPpacket(IPAddress &address) {
-  Serial.println("sending NTP packet...");
+void sendNTPpacket(IPAddress &address) {
   // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, WORDCLOCK_NTP_PACKET_SIZE);
+  memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
   // (see URL above for details on the packets)
   packetBuffer[0] = 0b11100011;   // LI, Version, Mode
@@ -176,122 +303,63 @@ unsigned long sendNTPpacket(IPAddress &address) {
   packetBuffer[2] = 6;     // Polling Interval
   packetBuffer[3] = 0xEC;  // Peer Clock Precision
   // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12] = 49;
+  packetBuffer[12] = 0x49;
   packetBuffer[13] = 0x4E;
-  packetBuffer[14] = 49;
-  packetBuffer[15] = 52;
-
+  packetBuffer[14] = 0x49;
+  packetBuffer[15] = 0x52;
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
   ntpUDP.beginPacket(address, 123); //NTP requests are to port 123
-  ntpUDP.write(packetBuffer, WORDCLOCK_NTP_PACKET_SIZE);
+  ntpUDP.write(packetBuffer, NTP_PACKET_SIZE);
   ntpUDP.endPacket();
 }
 
-void getTimefromNTP() {
-  WiFi.hostByName(ntpServerName, timeServerIP);
-
-  sendNTPpacket(timeServerIP); // send an NTP packet to a time server
-  // wait to see if a reply is available
-  delay(1000);
-
-  int cb = ntpUDP.parsePacket();
-  if (!cb) {
-    Serial.println("no packet yet");
-  } else {
-    Serial.print("packet received, length=");
-    Serial.println(cb);
-    // We've received a packet, read the data from it
-    ntpUDP.read(packetBuffer, WORDCLOCK_NTP_PACKET_SIZE); // read the packet into the buffer
-
-    //the timestamp starts at byte 40 of the received packet and is four bytes,
-    // or two words, long. First, esxtract the two words:
-
-    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-    // combine the four bytes (two words) into a long integer
-    // this is NTP time (seconds since Jan 1 1900):
-    unsigned long secsSince1900 = highWord << 16 | lowWord;
-    //Serial.print("Seconds since Jan 1 1900 = " );
-    //Serial.println(secsSince1900);
-
-    // now convert NTP time into everyday time:
-    //Serial.print("Unix time = ");
-    // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-    const unsigned long seventyYears = 2208988800UL;
-    // subtract seventy years:
-    unsigned long epoch = secsSince1900 - seventyYears;
-    // print Unix time:
-    //Serial.println(epoch);
-
-    TimeChangeRule *tcr;
-    time_t utc;
-    utc = epoch;
-
-    timeWithDST = CE.toLocal(utc, &tcr);
-
-    getGlobalTime();
-  }
+/**
+ * Initializes timeClient so it queries the NTP server
+ * also makes first update to sync the time
+ */
+void setupTime() {
+  Serial.println("Starting UDP");
+  ntpUDP.begin(localPort);
+  Serial.print("Local port: ");
+  Serial.println(ntpUDP.localPort());
+  Serial.println("waiting for sync");
+  setSyncProvider(getNtpTime);
+  setSyncInterval(10);
+  serialTime();
 }
 
-void getGlobalTime() {
+/**
+ * Updates the global time values with the time from the NTPClient
+ */
+void getLocalTime() {
+  TimeChangeRule *tcr;
+  time_t utc;
+  utc = now();
+  timeWithDST = CE.toLocal(utc, &tcr);
+
+  // global time values
   minuteWordclock = minute(timeWithDST);
   hourWordclock = hour(timeWithDST);
+  secondWordclock = second(timeWithDST);
 }
 
-
-void lightup(int Word[], uint32_t Colour) {
-  for (int x = 0; x < pixels.numPixels() + 1; x++) {
-    if (Word[x] == -1) {
-      break;
-    } //end of if loop
-    else {
-      pixels.setPixelColor(Word[x], Colour);
-    } // end of else loop
-  } //end of for loop
-}
-
-void blank() {
-  //clear the decks
-  for (int x = 0; x < NUMPIXELS; ++x) {
-    pixels.setPixelColor(x, background);
-  }
-}
-
-static void chase(uint32_t c) {
-  for (uint16_t i = 0; i < pixels.numPixels() + 4; i++) {
-    pixels.setPixelColor(i, c); // Draw new pixel
-    pixels.setPixelColor(i - 4, 0); // Erase pixel a few steps back
-    pixels.show();
-    delay(25);
-  }
-}
-
-int WortWifi[] = {49, 60, 59, 73};
-int WortConnect[] = {21, 19, 18, 36, 35, 34, 52, 55};
-
-static void connectWLAN() {
-  blank();
-  for (int i = 0; i < 5; ++i) {
-    pixels.setPixelColor(WortWifi[i], Blue);
-    pixels.show();
-    delay(250);
-  }
-  for (int i = 0; i < 8; ++i) {
-    pixels.setPixelColor(WortConnect[i], White);
-    pixels.show();
-    delay(250);
-  }
-}
-
+/**
+ * Sets the pixels for the hour
+ */
 void printHour() {
   if (minuteWordclock < 25) {
+    // show this hour if we are before 25 minutes past
     lightup(WordStunden[hourWordclock % 12], foreground);
   } else {
+    // show next hour
     lightup(WordStunden[(hourWordclock % 12) + 1], foreground);
   }
 }
 
+/**
+ * Sets pixels for the current minutes values
+ */
 void printMinute() {
   if (minuteWordclock != 0) {
     if (minuteWordclock >= 5 && minuteWordclock < 30) {
@@ -311,20 +379,10 @@ void printMinute() {
   }
 }
 
-void loop() {
-  if (counter == 0) {
-    getTimefromNTP();
-  } else {
-    if (counter < 250) {
-      counter++;
-    } else {
-      counter = 0;
-      getTimefromNTP();
-    }
-  }
-
-  displayTime(); // display the real-time clock data on the Serial Monitor and the LEDS,
-
+/**
+ * Displays the current time
+ */
+void displayTime() {
   blank();
 
   // light up "it's" it stays on
@@ -356,16 +414,30 @@ void loop() {
   pixels.show();
 }
 
-void displayTime() {
-  getGlobalTime();
+void setup() {
+  pixels.begin();
+  wipe();
+  Serial.begin(115200);
 
-  Serial.print(hourWordclock);
-  Serial.print(":");
-  Serial.println(minuteWordclock);
-  Serial.println("");
-  counter++;
-  Serial.print("Counter: ");
-  Serial.println(counter);
-  Serial.println("");
-  delay(200);
+  setupWifi();
+  setupTime();
+
+  chase(Green); // run basic screen test and show success
+}
+
+/**
+ * Shows current time
+ * To be in sync it updates the timeClient only after the minute change
+ */
+void loop() {
+  if (timeStatus() != timeNotSet) {
+    if (lastMinuteWordClock != minuteWordclock) { //update the display only if time has changed
+      serialTime();
+      displayTime();
+      getLocalTime();
+      lastMinuteWordClock = minuteWordclock;
+    } else {
+      getLocalTime();
+    }
+  }
 }
