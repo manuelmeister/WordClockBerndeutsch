@@ -7,6 +7,11 @@ neotrace https://www.instructables.com/id/WORK-IN-PROGRESS-Ribba-Word-Clock-With
 and others 
 
 ## Install
+
+Install with Platformio: ````platformio lib install````
+
+else it needs
+
 - ESP8266WiFi v2.4.2  
 - WiFiManager v0.14.0  
 - TimeLib v1.5  
