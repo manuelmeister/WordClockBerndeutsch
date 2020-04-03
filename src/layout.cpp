@@ -117,9 +117,9 @@ void WordLayout::showHourSemiExact() {
 void WordLayout::showMinute() {
   if (minute != 0) {
     if (minute >= 3 && minute < 30) {
-      lightup(WordMinuten[round(minute / 5.0) - 1], this->foregroundColor);
+      lightup(WordMinuten[(int) round(minute / 5.0) - 1], this->foregroundColor);
     } else if (minute >= 35) {
-      lightup(WordMinuten[5 - round((minute - 30) / 5.0)], this->foregroundColor);
+      lightup(WordMinuten[(int) (5 - round((minute - 30) / 5.0))], this->foregroundColor);
     }
     if (std::fmod(minute / 5.0, 1.0) != 0.0) {
       lightup(WordUngefaehr, this->foregroundColor);
