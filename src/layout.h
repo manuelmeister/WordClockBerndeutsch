@@ -101,65 +101,65 @@ static int *WordMinuten[] = {WordMinFunf, WordMinZehn, WordMinViertel, WordMinZw
 
 
 static int *WordMinutenSemiExact[][59] = {
-  {WordMinEins,    WordMinLeer},
-  {WordMinZwei,    WordMinLeer},
-  {WordMinDrei,    WordMinLeer},
-  {WordMinVier,    WordMinLeer},
-  {WordMinFunf,    WordMinLeer},
-  {WordMinSechs,   WordMinLeer},
-  {WordMinSieben,  WordMinLeer},
-  {WordMinAcht,    WordMinLeer},
-  {WordMinNeun,    WordMinLeer},
-  {WordMinZehn,    WordMinLeer},
-  {WordMinElf,     WordMinLeer},
-  {WordMinZwolf,   WordMinLeer},
-  {WordBald,       WordMinViertel, WordMinLeer},
-  {WordUngefaehr,  WordMinViertel, WordMinLeer},
-  {WordMinViertel, WordMinLeer},
-  {WordMinViertel, WordGewesen,    WordMinLeer},
-  {WordUngefaehr,  WordMinViertel, WordGewesen, WordMinLeer},
-  {WordBald,       WordMinZwanzig, WordMinLeer},
-  {WordUngefaehr,  WordMinZwanzig, WordMinLeer},
-  {WordMinZwanzig, WordMinLeer},
-  {WordMinZwanzig, WordGewesen,    WordMinLeer},
-  {WordUngefaehr,  WordMinZwanzig, WordGewesen, WordMinLeer},
-  {WordBald,       WordMinFunf,    WordMinLeer},
-  {WordUngefaehr,  WordMinFunf,    WordMinLeer},
-  {WordMinFunf,    WordMinLeer},
-  {WordMinVier,    WordMinLeer},
-  {WordMinDrei,    WordMinLeer},
-  {WordMinZwei,    WordMinLeer},
-  {WordMinEins,    WordMinLeer},
-  {WordMinLeer},
-  {WordMinEins,    WordMinLeer},
-  {WordMinZwei,    WordMinLeer},
-  {WordMinDrei,    WordMinLeer},
-  {WordMinVier,    WordMinLeer},
-  {WordMinFunf,    WordMinLeer},
-  {WordMinFunf,    WordGewesen,    WordMinLeer},
-  {WordUngefaehr,  WordMinFunf,    WordGewesen, WordMinLeer},
-  {WordBald,       WordMinZwanzig, WordMinLeer},
-  {WordUngefaehr,  WordMinZwanzig, WordMinLeer},
-  {WordMinZwanzig, WordMinLeer},
-  {WordMinZwanzig, WordGewesen,    WordMinLeer},
-  {WordUngefaehr,  WordMinZwanzig, WordGewesen, WordMinLeer},
-  {WordBald,       WordMinViertel, WordMinLeer},
-  {WordUngefaehr,  WordMinViertel, WordMinLeer},
-  {WordMinViertel, WordMinLeer},
-  {WordMinViertel, WordGewesen,    WordMinLeer},
-  {WordUngefaehr,  WordMinViertel, WordGewesen, WordMinLeer},
-  {WordMinZwolf,   WordMinLeer},
-  {WordMinElf,     WordMinLeer},
-  {WordMinZehn,    WordMinLeer},
-  {WordMinNeun,    WordMinLeer},
-  {WordMinAcht,    WordMinLeer},
-  {WordMinSieben,  WordMinLeer},
-  {WordMinSechs,   WordMinLeer},
-  {WordMinFunf,    WordMinLeer},
-  {WordMinVier,    WordMinLeer},
-  {WordMinDrei,    WordMinLeer},
-  {WordMinZwei,    WordMinLeer},
-  {WordMinEins,    WordMinLeer}
+  {WordMinEins,    WordMinLeer},                              // Minute 01
+  {WordMinZwei,    WordMinLeer},                              // Minute 02
+  {WordMinDrei,    WordMinLeer},                              // Minute 03
+  {WordMinVier,    WordMinLeer},                              // Minute 04
+  {WordMinFunf,    WordMinLeer},                              // Minute 05
+  {WordMinSechs,   WordMinLeer},                              // Minute 06
+  {WordMinSieben,  WordMinLeer},                              // Minute 07
+  {WordMinAcht,    WordMinLeer},                              // Minute 08
+  {WordMinNeun,    WordMinLeer},                              // Minute 09
+  {WordMinZehn,    WordMinLeer},                              // Minute 10
+  {WordMinElf,     WordMinLeer},                              // Minute 11
+  {WordMinZwolf,   WordMinLeer},                              // Minute 12
+  {WordBald,       WordMinViertel, WordMinLeer},              // Minute 13
+  {WordUngefaehr,  WordMinViertel, WordMinLeer},              // Minute 14
+  {WordMinViertel, WordMinLeer},                              // Minute 15
+  {WordMinViertel, WordGewesen,    WordMinLeer},              // Minute 16
+  {WordUngefaehr,  WordMinViertel, WordGewesen, WordMinLeer}, // Minute 17
+  {WordBald,       WordMinZwanzig, WordMinLeer},              // Minute 18
+  {WordUngefaehr,  WordMinZwanzig, WordMinLeer},              // Minute 19
+  {WordMinZwanzig, WordMinLeer},                              // Minute 20
+  {WordMinZwanzig, WordGewesen,    WordMinLeer},              // Minute 21
+  {WordUngefaehr,  WordMinZwanzig, WordGewesen, WordMinLeer}, // Minute 22
+  {WordBald,       WordMinFunf,    WordMinLeer},              // Minute 23
+  {WordUngefaehr,  WordMinFunf,    WordMinLeer},              // Minute 24
+  {WordMinFunf,    WordMinLeer},                              // Minute 25
+  {WordMinVier,    WordMinLeer},                              // Minute 26
+  {WordMinDrei,    WordMinLeer},                              // Minute 27
+  {WordMinZwei,    WordMinLeer},                              // Minute 28
+  {WordMinEins,    WordMinLeer},                              // Minute 29
+  {WordMinLeer},                                              // Minute 30
+  {WordMinEins,    WordMinLeer},                              // Minute 31
+  {WordMinZwei,    WordMinLeer},                              // Minute 32
+  {WordMinDrei,    WordMinLeer},                              // Minute 33
+  {WordMinVier,    WordMinLeer},                              // Minute 34
+  {WordMinFunf,    WordMinLeer},                              // Minute 35
+  {WordMinFunf,    WordGewesen,    WordMinLeer},              // Minute 36
+  {WordUngefaehr,  WordMinFunf,    WordGewesen, WordMinLeer}, // Minute 37
+  {WordBald,       WordMinZwanzig, WordMinLeer},              // Minute 38
+  {WordUngefaehr,  WordMinZwanzig, WordMinLeer},              // Minute 39
+  {WordMinZwanzig, WordMinLeer},                              // Minute 40
+  {WordMinZwanzig, WordGewesen,    WordMinLeer},              // Minute 41
+  {WordUngefaehr,  WordMinZwanzig, WordGewesen, WordMinLeer}, // Minute 42
+  {WordBald,       WordMinViertel, WordMinLeer},              // Minute 43
+  {WordUngefaehr,  WordMinViertel, WordMinLeer},              // Minute 44
+  {WordMinViertel, WordMinLeer},                              // Minute 45
+  {WordMinViertel, WordGewesen,    WordMinLeer},              // Minute 46
+  {WordUngefaehr,  WordMinViertel, WordGewesen, WordMinLeer}, // Minute 47
+  {WordMinZwolf,   WordMinLeer},                              // Minute 48
+  {WordMinElf,     WordMinLeer},                              // Minute 49
+  {WordMinZehn,    WordMinLeer},                              // Minute 50
+  {WordMinNeun,    WordMinLeer},                              // Minute 51
+  {WordMinAcht,    WordMinLeer},                              // Minute 52
+  {WordMinSieben,  WordMinLeer},                              // Minute 53
+  {WordMinSechs,   WordMinLeer},                              // Minute 54
+  {WordMinFunf,    WordMinLeer},                              // Minute 55
+  {WordMinVier,    WordMinLeer},                              // Minute 56
+  {WordMinDrei,    WordMinLeer},                              // Minute 57
+  {WordMinZwei,    WordMinLeer},                              // Minute 58
+  {WordMinEins,    WordMinLeer}                               // Minute 59
 };
 
 static int *WordMinutenExact[] = {WordMinEins, WordMinZwei, WordMinDrei, WordMinVier, WordMinFunf, WordMinSechs,
