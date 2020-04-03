@@ -7,12 +7,12 @@
   G	  L 	Y 	N 	E 	I 	V 	I 	E	  R	  T	  U
   E	  I 	S 	Ä 	C 	H 	S 	I 	B	  E	  U	  F
   Z	  W 	Ö 	U 	F 	Ü 	F 	L 	A	  C	  H	  T
-  -	  M 	E 	I 	S 	T 	E 	R 	.I  O	  / 	Z
+  🐈  M 	E 	I 	S 	T 	E 	R 	.I  O	  / 	Z
   D	  R 	Ü 	N 	E 	Z 	W 	Ä 	N	  Z	  G	  Y
   N	  Ü 	N 	Z 	Ä 	J 	A 	B 	V	  O	  R	  T
   H	  A 	U 	B 	I 	Q 	Z 	W 	Ö	  U	  F	  I
-  V	  I 	E 	R 	I 	K 	F 	Ü 	F	  I	  X	  -
-  -	  E 	I 	S 	Ä 	C 	H 	S 	I	  B	  N	  I
+  V	  I 	E 	R 	I 	K 	F 	Ü 	F	  I	  X	  📶
+  🐘  E 	I 	S 	Ä 	C 	H 	S 	I	  B	  N	  I
   D	  R 	Ü 	E 	U 	F 	I 	A 	C	  H	  T	  I
   N	  Ü 	N 	I 	Z 	Ä 	N 	I 	D	  G	  S	  Y
 */
