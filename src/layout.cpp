@@ -170,10 +170,10 @@ void WordLayout::showMinuteSemiExact() {
         lightup(WordMinutenSemiExact[minute - 1][i], this->foregroundColor);
       }
     }
-    if ((minute > 0 && minute < 23) || (minute < 37 && minute > 30)) {
+    if ((minute > 0 && minute < 23) || (minute <= 37 && minute > 30)) {
       lightup(WordNach, this->foregroundColor);
     }
-    if (minute >= 37 || (minute >= 23 && minute < 30)) {
+    if (minute > 37 || (minute >= 23 && minute < 30)) {
       lightup(WordVor, this->foregroundColor);
     }
     if (minute >= 23 && minute <= 37) {
