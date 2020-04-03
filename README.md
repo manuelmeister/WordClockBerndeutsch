@@ -1,5 +1,7 @@
 # WordClock Bärndütsch
 
+![Image of the wordclock](design/wordclock.jpg)
+
 LOLIN (WEMOS) D1 mini Lite (ESP8266) Wordclock Program
 Based on scripts and snippets from:
 Rui Santos http://randomnerdtutorials.com
@@ -18,6 +20,9 @@ else it needs
 - Timezone v1.2.2  
 - Adafruit_NeoPixel v1.1.7  
 
+
+## Requirments
+See [Requirements](/design/Requirements.md)
 
 ## Todos
 - Settings Page
