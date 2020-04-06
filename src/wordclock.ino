@@ -39,6 +39,14 @@ void serialTime();
 
 void sendNTPpacket(IPAddress &address);
 
+IPAddress ntpServerIP;
+
+time_t extractNtpTime();
+
+void resolveNtpServerAddress();
+
+unsigned long requestNtpTime();
+
 //Central European Time (Frankfurt, Paris)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     //Central European Summer Time
 TimeChangeRule CET = {"CET", Last, Sun, Oct, 3, 60};       //Central European Standard Time
@@ -88,38 +96,51 @@ void getLocalTime() {
 
 time_t getNtpTime() {
   wl.setWifiStatus(DarkestBlue);
-  IPAddress ntpServerIP; // NTP server's ip address
-  while (ntpUDP.parsePacket() > 0); // discard any previously received packets
-  Serial.println("");
+  unsigned long seconds = requestNtpTime();
+  if (seconds > 0) {
+    wl.setWifiStatus(DarkestGreen);
+    Serial.print("Received: ");
+    Serial.println(seconds);
+  } else {
+    wl.setWifiStatus(Red, 500000000);
+    Serial.println("No NTP Response :-(");
+  }
+  return seconds;
+}
+
+unsigned long requestNtpTime() {
+  unsigned long seconds = 0; // return 0 if unable to get the time (Timelib just queries again)
   Serial.println("Transmit NTP Request");
-  // get a random server from the pool
-  WiFi.hostByName(ntpServerName, ntpServerIP);
-  Serial.print(ntpServerName);
-  Serial.print(": ");
-  Serial.println(ntpServerIP);
+  while (ntpUDP.parsePacket() > 0); // discard any previously received packets
   sendNTPpacket(ntpServerIP);
   uint32_t beginWait = millis();
   while (millis() - beginWait < 2500) {
     int size = ntpUDP.parsePacket();
     if (size >= NTP_PACKET_SIZE) {
-      Serial.println("Receive NTP Response");
-      ntpUDP.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
-      unsigned long secsSince1900;
-      // convert four bytes starting at location 40 to a long integer
-      secsSince1900 = (unsigned long) packetBuffer[40] << 24;
-      secsSince1900 |= (unsigned long) packetBuffer[41] << 16;
-      secsSince1900 |= (unsigned long) packetBuffer[42] << 8;
-      secsSince1900 |= (unsigned long) packetBuffer[43];
-      setSyncInterval(120);
-      Serial.print("Received: ");
-      Serial.println(secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR);
-      wl.setWifiStatus(DarkestGreen);
-      return secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR;
+      seconds = extractNtpTime();
     }
   }
-  wl.setWifiStatus(Red, 500000000);
-  Serial.println("No NTP Response :-(");
-  return 0; // return 0 if unable to get the time (Timelib just queries again)
+  return seconds;
+}
+
+void resolveNtpServerAddress() {// get a random server from the pool
+  Serial.println("Resolve ip of the servername");
+  WiFi.hostByName(ntpServerName, ntpServerIP);
+  Serial.print(ntpServerName);
+  Serial.print(": ");
+  Serial.println(ntpServerIP);
+}
+
+time_t extractNtpTime() {
+  Serial.println("Receive NTP Response");
+  ntpUDP.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
+  unsigned long secsSince1900;
+  // convert four bytes starting at location 40 to a long integer
+  secsSince1900 = (unsigned long) packetBuffer[40] << 24;
+  secsSince1900 |= (unsigned long) packetBuffer[41] << 16;
+  secsSince1900 |= (unsigned long) packetBuffer[42] << 8;
+  secsSince1900 |= (unsigned long) packetBuffer[43];
+  return secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR;
 }
 
 // send an NTP request to the time server at the given address
@@ -154,8 +175,9 @@ void setupTime() {
   Serial.print("Local port: ");
   Serial.println(ntpUDP.localPort());
   Serial.println("waiting for sync");
+  resolveNtpServerAddress();
   setSyncProvider(getNtpTime);
-  setSyncInterval(10);
+  setSyncInterval(720);
 }
 
 /**
@@ -216,6 +238,9 @@ void loop() {
     } else {
       wl.displayWifiStatus();
       getLocalTime();
+    }
+    if (wl.hour == 3 && wl.minute == 14) {
+      resolveNtpServerAddress();
     }
   }
 }
