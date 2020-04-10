@@ -48,7 +48,7 @@ void WordLayout::showLogo(uint32_t color) {
       if (WordURL[j][i] == -1) {
         break;
       } else {
-        if(WordURL[j][i] == SymbolWifi[0]){
+        if (WordURL[j][i] == SymbolWifi[0]) {
           this->pixels.setPixelColor(WordURL[j][i], Blue); // Erase pixel a few steps back
         } else {
           this->pixels.setPixelColor(WordURL[j][i], White); // Erase pixel a few steps back
@@ -182,6 +182,19 @@ void WordLayout::showMinuteSemiExact() {
   }
 }
 
+/**
+ * Sets pixels for the current minutes values
+ */
+void WordLayout::showMinuteLocatorSemiExact() {
+  if ((minute > 15 && minute < 18) ||
+      (minute > 20 && minute < 23) ||
+      (minute > 35 && minute < 38) ||
+      (minute > 40 && minute < 43) ||
+      (minute > 45 && minute < 48)) {
+    lightup(WordGewesen, this->foregroundColor);
+  }
+}
+
 void WordLayout::displayTime() {
   blank();
 
@@ -210,6 +223,11 @@ void WordLayout::displayTime() {
   } else if (hour > 20 || hour < 6) {
     lightup(SymbolCat, DarkestBlue);
   }
+
+  if (exact == 1) {
+    showMinuteLocatorSemiExact();
+  }
+
   displayWifiStatus();
 
   pixels.show();
@@ -248,9 +266,9 @@ void WordLayout::setWifiStatus(uint32_t Color, int duration) {
 }
 
 void WordLayout::displayWifiStatus() {
-  if(wifiWait > 0){
+  if (wifiWait > 0) {
     wifiWait--;
-  } else if(wifiWait == 0) {
+  } else if (wifiWait == 0) {
     wifiColor = Black;
     wifiWait = -1;
     lightup(SymbolWifi, wifiColor);

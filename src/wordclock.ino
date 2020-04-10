@@ -23,6 +23,7 @@
 #include "layout.h"
 
 int lastMinuteWordClock = 61;
+int failedRequests = 0;
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
 byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
@@ -101,9 +102,14 @@ time_t getNtpTime() {
     wl.setWifiStatus(DarkestGreen);
     Serial.print("Received: ");
     Serial.println(seconds);
+    failedRequests = 0;
   } else {
-    wl.setWifiStatus(Red, 500000000);
     Serial.println("No NTP Response :-(");
+    if (failedRequests++ > 10) {
+      Serial.println("NTP Request failed 10 times in a row");
+      wl.setWifiStatus(Red, 500000000);
+      failedRequests = 0;
+    }
   }
   return seconds;
 }
