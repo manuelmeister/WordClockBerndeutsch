@@ -23,6 +23,7 @@
 #include "layout.h"
 
 int lastMinuteWordClock = 61;
+int lastSecondWordClock = 61;
 int failedRequests = 0;
 
 const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
@@ -68,7 +69,8 @@ void serialTime() {
   formatDigits(wl.hour);
   Serial.print(":");
   formatDigits(wl.minute);
-  Serial.print(" - ");
+  Serial.print(":");
+  formatDigits(wl.second);
 }
 
 /**
@@ -93,6 +95,7 @@ void getLocalTime() {
   // global time values
   wl.minute = minute(timeWithDST);
   wl.hour = hour(timeWithDST);
+  wl.second = second(timeWithDST);
 }
 
 time_t getNtpTime() {
@@ -236,14 +239,20 @@ void setup() {
  */
 void loop() {
   if (timeStatus() != timeNotSet) {
+    getLocalTime();
     if (lastMinuteWordClock != wl.minute) { //update the display only if time has changed
-      getLocalTime();
       serialTime();
-      wl.displayTime();
+      Serial.print(" - ");
+      wl.displayTime(true);
       lastMinuteWordClock = wl.minute;
+      lastSecondWordClock = wl.second;
+    } else if (lastSecondWordClock != wl.second) {
+        wl.displayTime();
+        serialTime();
+        lastSecondWordClock = wl.second;
     } else {
+      wl.displayTime();
       wl.displayWifiStatus();
-      getLocalTime();
     }
     if (wl.hour == 3 && wl.minute == 14) {
       resolveNtpServerAddress();

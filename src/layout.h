@@ -1,4 +1,5 @@
 #include <Adafruit_NeoPixel.h>
+#include "auto_brightness.h"
 
 #ifndef WordLayout_h
 #define WordLayout_h
@@ -6,6 +7,8 @@
 
 static uint32_t Black = Adafruit_NeoPixel::Color(0, 0, 0);
 static uint32_t White = Adafruit_NeoPixel::Color(49, 52, 34);
+static uint32_t BrightWhite = Adafruit_NeoPixel::Color(255, 255, 200);
+static uint32_t MediumWhite = Adafruit_NeoPixel::Color(125, 125, 100);
 static uint32_t DarkWhite = Adafruit_NeoPixel::Color(36, 39, 25);
 static uint32_t DarkerWhite = Adafruit_NeoPixel::Color(24, 26, 17);
 static uint32_t DarkestWhite = Adafruit_NeoPixel::Color(12, 13, 8);
@@ -13,6 +16,7 @@ static uint32_t Green = Adafruit_NeoPixel::Color(10, 90, 0);
 static uint32_t DarkGreen = Adafruit_NeoPixel::Color(5, 45, 0);
 static uint32_t DarkestGreen = Adafruit_NeoPixel::Color(1, 9, 0);
 static uint32_t Red = Adafruit_NeoPixel::Color(90, 0, 0);
+static uint32_t MediumBlue = Adafruit_NeoPixel::Color(0, 40, 170);
 static uint32_t Blue = Adafruit_NeoPixel::Color(0, 20, 85);
 static uint32_t DarkBlue = Adafruit_NeoPixel::Color(0, 10, 40);
 static uint32_t DarkestBlue = Adafruit_NeoPixel::Color(0, 8, 20);
@@ -171,17 +175,17 @@ static int *WordMinutenExact[] = {WordMinEins, WordMinZwei, WordMinDrei, WordMin
 
 class WordLayout {
 public:
-    Adafruit_NeoPixel pixels = Adafruit_NeoPixel(144, D8, NEO_GRB + NEO_KHZ800);
     uint32_t foregroundColor;
     uint32_t backgroundColor;
     int hour;
     int minute;
+    int second;
 
     void setupDisplay();
 
     void connectWLAN();
 
-    void displayTime();
+    void displayTime(bool debug = false);
 
     /**
      * Runs through all pixels
@@ -210,7 +214,9 @@ public:
      * @param Word array of the id of the pixel
      * @param Color
      */
-    void lightup(int *Word, uint32_t Color);
+    void lightup(int *Word, uint32_t Color, bool debug = false);
+
+    void display(bool debug = false);
 
     void setWifiStatus(uint32_t Color, int time = 1250);
 
@@ -226,18 +232,23 @@ public:
      */
     void wipe();
 
+    void debug();
+
 private:
-    void showMinute();
+    Adafruit_NeoPixel pixels = Adafruit_NeoPixel(144, D7, NEO_GRB + NEO_KHZ800);
+    AutoBrightness autoBrightness = AutoBrightness();
 
-    void showMinuteSemiExact();
+    void showMinute(bool debug = false);
 
-    void showMinuteExact();
+    void showMinuteSemiExact(bool debug = false);
 
-    void showMinuteLocatorSemiExact();
+    void showMinuteExact(bool debug = false);
 
-    void showHour();
+    void showMinuteLocatorSemiExact(bool debug = false);
 
-    void showHourSemiExact();
+    void showHour(bool debug = false);
+
+    void showHourSemiExact(bool debug = false);
 };
 
 #endif
