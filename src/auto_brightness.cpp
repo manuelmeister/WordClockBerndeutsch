@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "auto_brightness.h"
 
-const int PROGMEM gamma8[] = {1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7, 7, 7, 8, 8, 9, 9, 10, 10,
+const byte PROGMEM gamma8[] = {1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6, 6, 7, 7, 7, 8, 8, 9, 9, 10, 10,
                               11, 11, 12, 12, 13, 13, 14, 15, 15, 16, 16, 17, 18, 18, 19, 19, 20, 21, 21, 22, 23, 23,
                               24, 25, 25, 26, 27, 27, 28, 29, 30, 30, 31, 32, 33, 33, 34, 35, 36, 36, 37, 38, 39, 40,
                               40, 41, 42, 43, 44, 44, 45, 46, 47, 48, 49, 50, 50, 51, 52, 53, 54, 55, 56, 57, 58, 58,
@@ -15,30 +15,37 @@ const int PROGMEM gamma8[] = {1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 5,
                               218, 219, 220, 222, 223, 225, 226, 228, 229, 230, 232, 233, 235, 236, 238, 239, 241, 242,
                               244, 245, 247, 248, 250, 251, 253, 254, 255};
 
-int AutoBrightness::refresh() {
-  int light_sensor = analogRead(A0);
-
-  this->light_vector.push_back(light_sensor);
-  if (this->light_vector.size() > 30) this->light_vector.erase(this->light_vector.begin());
+int AutoBrightness::refresh(int light_sensor) {
+  this->light_values[this->light_index] = light_sensor;
+  this->light_index = (this->light_index + 1) % 30;
+  this->indexed_light = min(30, this->indexed_light + 1);
 
   return scaled_brightness();
 }
 
-double AutoBrightness::averarge_light() {
-  double brightness_sum = 0.0;
-  for (int brightness: this->light_vector) {
-    brightness_sum += brightness;
+float AutoBrightness::averarge_light() {
+  int brightness_sum = 0;
+  for (int i = 0; i < this->indexed_light; i++) {
+    brightness_sum += this->light_values[i];
   }
 
-  return brightness_sum / this->light_vector.size();
+  return float(brightness_sum) / float(this->indexed_light);
 }
 
+float clamp(float x, float a, float b) {
+  return max(a, min(b, x));
+}
+
+float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
+  x = clamp(x, in_min, in_max);
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 int AutoBrightness::scaled_brightness() {
-  double brightness_frac = max(0.0,min(1.0, averarge_light() / 1024.0));
-  double resbright = 255.0 * brightness_frac;
-  int brightness_scaled = max(1, min(80, int(map(256 - int(pgm_read_byte_inlined(&gamma8[255 - int(resbright)])),1,125,1,255))));
+  float brightness_frac = clamp(averarge_light(), 0.0f, 1024.0f);
+  int resbright = int(mapf(brightness_frac, 0.0f, 1024.0f, 0.0f, 255.0f));
+  int brightness_scaled = max(1, min(255, 255 - int(pgm_read_byte_inlined(&gamma8[255 - resbright]))));
 
-  return int(brightness_scaled);
+  return brightness_scaled;
 }
 

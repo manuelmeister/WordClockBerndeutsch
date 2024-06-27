@@ -1,9 +1,10 @@
 class AutoBrightness {
 public:
-    int refresh();
-    double averarge_light();
+    int refresh(int light_sensor);
+    float averarge_light();
     int scaled_brightness();
 private:
-    std::vector<int> light_vector;
-
+    int light_values[30]{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    int light_index = 0;
+    int indexed_light = 0;
 };

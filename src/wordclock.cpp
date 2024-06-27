@@ -1,63 +1,44 @@
 /////////////////////////////////////////////
 //
-// v1.1.0
+// v2.0.0
 //
 // LOLIN (WEMOS) D1 mini Lite (ESP8266) Wordclock Program
-// Based on sripts and snippets from:
+// Based on scripts and snippets from:
 // Rui Santos http://randomnerdtutorials.com
 // neotrace https://www.instructables.com/id/WORK-IN-PROGRESS-Ribba-Word-Clock-With-Wemos-D1-Mi/
 // and others
 //
-// Kurt Meister, 2018-12-24
-// Thanks to Manuel Meister for refactoring and adding automated summertime conversion.
+// Manuel Meister, 2024-06-27
+// Thanks to Kurt Meister for introducing me to the Arduino universe.
 //
 /////////////////////////////////////////////
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h> // v2.4.2
-#include <WiFiManager.h> // v0.14.0
+#include <WiFiManager.h>
+#include <Timezone.h>
+#include <NTPClient.h>
 #include <WiFiUdp.h>
-#include <TimeLib.h> // v1.5
-#include <Timezone.h> // v1.2.2
+#include <RTClib.h>
 
+#include "settings.h"
 #include "layout.h"
 
 int lastMinuteWordClock = 61;
 int lastSecondWordClock = 61;
-int failedRequests = 0;
 
-const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
-byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
-static const char ntpServerName[] = "0.ch.pool.ntp.org";
-
-const int timeZone = 0;     // Central European Time
-
-// function definitions
-time_t getNtpTime();
+RTC_DS3231 rtc;
 
 void formatDigits(int digits);
 
 void serialTime();
 
-void sendNTPpacket(IPAddress &address);
-
-IPAddress ntpServerIP;
-
-time_t extractNtpTime();
-
-void resolveNtpServerAddress();
-
-unsigned long requestNtpTime();
-
 //Central European Time (Frankfurt, Paris)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     //Central European Summer Time
 TimeChangeRule CET = {"CET", Last, Sun, Oct, 3, 60};       //Central European Standard Time
 Timezone CE(CEST, CET);
-time_t timeWithDST;
 
 WiFiUDP ntpUDP;
-unsigned int localPort = 8888;  // local port to listen for UDP packets
-
+NTPClient timeClient(ntpUDP, "0.ch.pool.ntp.org");
 WordLayout wl = WordLayout();
 
 /**
@@ -65,7 +46,6 @@ WordLayout wl = WordLayout();
  */
 void serialTime() {
   // digital clock display of the time
-  Serial.println("");
   formatDigits(wl.hour);
   Serial.print(":");
   formatDigits(wl.minute);
@@ -88,9 +68,8 @@ void formatDigits(int digits) {
  */
 void getLocalTime() {
   TimeChangeRule *tcr;
-  time_t utc;
-  utc = now();
-  timeWithDST = CE.toLocal(utc, &tcr);
+  time_t utc = rtc.now().secondstime();
+  time_t timeWithDST = CE.toLocal(utc, &tcr);
 
   // global time values
   wl.minute = minute(timeWithDST);
@@ -98,80 +77,11 @@ void getLocalTime() {
   wl.second = second(timeWithDST);
 }
 
-time_t getNtpTime() {
-  wl.setWifiStatus(DarkestBlue);
-  unsigned long seconds = requestNtpTime();
-  if (seconds > 0) {
-    wl.setWifiStatus(DarkestGreen);
-    Serial.print("Received: ");
-    Serial.println(seconds);
-    failedRequests = 0;
-  } else {
-    Serial.println("No NTP Response :-(");
-    if (failedRequests++ > 10) {
-      Serial.println("NTP Request failed 10 times in a row");
-      wl.setWifiStatus(Red, 500000000);
-      failedRequests = 0;
-    }
+void updateFromNTP() {
+  if (timeClient.forceUpdate()) {
+    rtc.adjust(DateTime(timeClient.getEpochTime()));
+    getLocalTime();
   }
-  return seconds;
-}
-
-unsigned long requestNtpTime() {
-  unsigned long seconds = 0; // return 0 if unable to get the time (Timelib just queries again)
-  Serial.println("Transmit NTP Request");
-  while (ntpUDP.parsePacket() > 0); // discard any previously received packets
-  sendNTPpacket(ntpServerIP);
-  uint32_t beginWait = millis();
-  while (millis() - beginWait < 2500) {
-    int size = ntpUDP.parsePacket();
-    if (size >= NTP_PACKET_SIZE) {
-      seconds = extractNtpTime();
-    }
-  }
-  return seconds;
-}
-
-void resolveNtpServerAddress() {// get a random server from the pool
-  Serial.println("Resolve ip of the servername");
-  WiFi.hostByName(ntpServerName, ntpServerIP);
-  Serial.print(ntpServerName);
-  Serial.print(": ");
-  Serial.println(ntpServerIP);
-}
-
-time_t extractNtpTime() {
-  Serial.println("Receive NTP Response");
-  ntpUDP.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
-  unsigned long secsSince1900;
-  // convert four bytes starting at location 40 to a long integer
-  secsSince1900 = (unsigned long) packetBuffer[40] << 24;
-  secsSince1900 |= (unsigned long) packetBuffer[41] << 16;
-  secsSince1900 |= (unsigned long) packetBuffer[42] << 8;
-  secsSince1900 |= (unsigned long) packetBuffer[43];
-  return secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR;
-}
-
-// send an NTP request to the time server at the given address
-void sendNTPpacket(IPAddress &address) {
-  // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);
-  // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
-  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-  packetBuffer[1] = 0;     // Stratum, or type of clock
-  packetBuffer[2] = 6;     // Polling Interval
-  packetBuffer[3] = 0xEC;  // Peer Clock Precision
-  // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12] = 0x49;
-  packetBuffer[13] = 0x4E;
-  packetBuffer[14] = 0x49;
-  packetBuffer[15] = 0x52;
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  ntpUDP.beginPacket(address, 123); //NTP requests are to port 123
-  ntpUDP.write(packetBuffer, NTP_PACKET_SIZE);
-  ntpUDP.endPacket();
 }
 
 /**
@@ -179,20 +89,15 @@ void sendNTPpacket(IPAddress &address) {
  * also makes first update to sync the time
  */
 void setupTime() {
-  Serial.println("Starting UDP");
-  ntpUDP.begin(localPort);
-  Serial.print("Local port: ");
-  Serial.println(ntpUDP.localPort());
-  Serial.println("waiting for sync");
-  resolveNtpServerAddress();
-  setSyncProvider(getNtpTime);
-  setSyncInterval(720);
+  timeClient.begin();
+  updateFromNTP();
+  timeClient.end();
 }
 
 /**
  * Sets up wifi
  */
-void setupWifi() {
+bool setupWifi() {
   wifi_station_set_hostname("wordclock");
 
   // WiFiManager
@@ -208,16 +113,21 @@ void setupWifi() {
   // Displays Wifi Connect screen
   wl.connectWLAN();
 
+  wifiManager.setConfigPortalTimeout(60);
+
   // fetches ssid and pass from eeprom and tries to connect
   // if it does not connect it starts an access point with the specified name
   // here  "WordClock"
   // and goes into a blocking loop awaiting configuration
-  wifiManager.autoConnect("wordclock");
+  bool connected = wifiManager.autoConnect("wordclock");
   // or use this for auto generated name ESP + ChipID
   //wifiManager.autoConnect();
 
-  // if you get here you have connected to the WiFi
-  Serial.println("Connected.");
+  if (connected) {
+    // if you get here you have connected to the WiFi
+    Serial.println("Connected.");
+  }
+  return connected;
 }
 
 void setup() {
@@ -228,34 +138,51 @@ void setup() {
   wl.chase(DarkestWhite); // run basic screen test and show success
   wl.showLogo(White);
 
-  setupWifi();
-  setupTime();
-
-  wl.showWifiSuccess();
+  rtc.begin();
+  if (setupWifi()) {
+    setupTime();
+    wl.showWifiSuccess();
+  }
 }
+
+int currentTick = 1;
 
 /**
  * Displays current time if minute changed
  */
 void loop() {
-  if (timeStatus() != timeNotSet) {
-    getLocalTime();
-    if (lastMinuteWordClock != wl.minute) { //update the display only if time has changed
-      serialTime();
-      Serial.print(" - ");
-      wl.displayTime(true);
-      lastMinuteWordClock = wl.minute;
-      lastSecondWordClock = wl.second;
-    } else if (lastSecondWordClock != wl.second) {
-        wl.displayTime();
-        serialTime();
-        lastSecondWordClock = wl.second;
-    } else {
-      wl.displayTime();
-      wl.displayWifiStatus();
+  getLocalTime();
+  if (lastMinuteWordClock != wl.minute) { //update the display only if time has changed
+    #ifdef WORDCLOCK_SERIAL_DEBUG
+    serialTime();
+    Serial.print(" - ");
+    wl.update();
+    Serial.print(" | TEMP: ");
+    Serial.println(rtc.getTemperature());
+    #endif
+    #ifndef WORDCLOCK_SERIAL_DEBUG
+    wl.update();
+    Serial.println();
+    #endif
+    lastMinuteWordClock = wl.minute;
+    lastSecondWordClock = wl.second;
+  } else if (lastSecondWordClock != wl.second) {
+    #ifdef WORDCLOCK_SERIAL_DEBUG
+    serialTime();
+    Serial.print(" - ");
+    wl.update();
+    Serial.print(" | TEMP: ");
+    Serial.println(rtc.getTemperature());
+    #endif
+    #ifndef WORDCLOCK_SERIAL_DEBUG
+    wl.update();
+    Serial.println();
+    #endif
+    lastSecondWordClock = wl.second;
+  } else {
+    if (currentTick == 0) {
+      wl.update();
     }
-    if (wl.hour == 3 && wl.minute == 14) {
-      resolveNtpServerAddress();
-    }
+    currentTick = (currentTick + 1) % WORDCLOCK_REFRESH_RATE;
   }
 }

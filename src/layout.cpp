@@ -1,6 +1,6 @@
-#include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 #include <string>
+#include "settings.h"
 #include "layout.h"
 
 /*
@@ -30,6 +30,14 @@ uint32_t wifiColor = Black;
 // How long this state should be displayed
 int wifiWait = 0;
 
+int maxPowerdraw = 1200;
+
+int mapToPowerdraw(uint32_t color) {
+  long r = map(long((color >> 16) & 0xFF), 0, 255, 0, 20);
+  long g = map(long((color >> 8) & 0xFF), 0, 255, 0, 20);
+  long b = map(long(color & 0xFF), 0, 255, 0, 20);
+  return int(r+g+b);
+}
 
 void WordLayout::chase(uint32_t color) {
   for (uint16_t i = 0; i < this->pixels.numPixels() + 4; i++) {
@@ -63,9 +71,17 @@ void WordLayout::showLogo(uint32_t color) {
   }
 }
 
-void WordLayout::blank() {
+void WordLayout::blank(bool skip) {
+  #ifdef WORDCLOCK_BRIGHTNESS_SENSOR
+    this->powerdraw = 0;
+  #endif
   for (int x = 0; x < this->pixels.numPixels(); ++x) {
-    this->pixels.setPixelColor(x, this->backgroundColor);
+    #ifdef WORDCLOCK_BRIGHTNESS_SENSOR
+      this->powerdraw += mapToPowerdraw(this->backgroundColor);
+    #endif
+    if (!skip) {
+      this->pixels.setPixelColor(x, this->backgroundColor);
+    }
   }
 }
 
@@ -89,72 +105,47 @@ void WordLayout::connectWLAN() {
 /**
  * Sets the pixels for the hour
  */
-void WordLayout::showHour(bool debug) {
+void WordLayout::showHour(bool skip) {
   if (minute < 25) {
     // show this hour if we are before 25 minutes past
-    lightup(WordStunden[hour % 12], this->foregroundColor, debug);
+    lightup(WordStunden[hour % 12], this->foregroundColor, skip);
   } else {
     // show next hour
-    lightup(WordStunden[(hour % 12) + 1], this->foregroundColor, debug);
+    lightup(WordStunden[(hour % 12) + 1], this->foregroundColor, skip);
   }
 }
 
 /**
  * Sets the pixels for the hour
  */
-void WordLayout::showHourSemiExact(bool debug) {
+void WordLayout::showHourSemiExact(bool skip) {
   if (minute < 23) {
     // show this hour if we are before 23 minutes past
-    lightup(WordStunden[hour % 12], this->foregroundColor, debug);
+    lightup(WordStunden[hour % 12], this->foregroundColor, skip);
   } else {
     // show next hour
-    lightup(WordStunden[(hour % 12) + 1], this->foregroundColor, debug);
+    lightup(WordStunden[(hour % 12) + 1], this->foregroundColor, skip);
   }
 }
 
 /**
  * Sets pixels for the current minutes values
  */
-void WordLayout::showMinute(bool debug) {
-  if (minute != 0) {
-    if (minute >= 3 && minute < 30) {
-      lightup(WordMinuten[(int) round(minute / 5.0) - 1], this->foregroundColor, debug);
-    } else if (minute >= 35) {
-      lightup(WordMinuten[(int) (5 - round((minute - 30) / 5.0))], this->foregroundColor, debug);
-    }
-    if (std::fmod(minute / 5.0, 1.0) != 0.0) {
-      lightup(WordUngefaehr, this->foregroundColor, debug);
-    }
-    if ((minute >= 5 && minute < 25) || (minute < 40 && minute >= 35)) {
-      lightup(WordNach, this->foregroundColor, debug);
-    }
-    if (minute >= 40 || (minute >= 25 && minute < 30)) {
-      lightup(WordVor, this->foregroundColor, debug);
-    }
-    if (minute >= 25 && minute < 40) {
-      lightup(WordHalb, this->foregroundColor, debug);
-    }
-  }
-}
-
-/**
- * Sets pixels for the current minutes values
- */
-void WordLayout::showMinuteExact(bool debug) {
+void WordLayout::showMinuteExact(bool skip) {
   if (minute != 0) {
     if (minute < 30) {
-      lightup(WordMinutenExact[minute - 1], this->foregroundColor, debug);
+      lightup(WordMinutenExact[minute - 1], this->foregroundColor, skip);
     } else if (minute > 30) {
-      lightup(WordMinutenExact[29 - (minute % 30)], this->foregroundColor, debug);
+      lightup(WordMinutenExact[29 - (minute % 30)], this->foregroundColor, skip);
     }
     if ((minute > 0 && minute < 25) || (minute < 40 && minute > 30)) {
-      lightup(WordNach, this->foregroundColor, debug);
+      lightup(WordNach, this->foregroundColor, skip);
     }
     if (minute >= 40 || (minute >= 25 && minute < 30)) {
-      lightup(WordVor, this->foregroundColor, debug);
+      lightup(WordVor, this->foregroundColor, skip);
     }
     if (minute >= 25 && minute <= 35) {
-      lightup(WordHalb, this->foregroundColor, debug);
+      lightup(WordHalb, this->foregroundColor, skip);
     }
   }
 }
@@ -162,23 +153,23 @@ void WordLayout::showMinuteExact(bool debug) {
 /**
  * Sets pixels for the current minutes values
  */
-void WordLayout::showMinuteSemiExact(bool debug) {
+void WordLayout::showMinuteSemiExact(bool skip) {
   if (minute != 0) {
     for (int i = 0; i < 5; ++i) {
       if (WordMinutenSemiExact[minute - 1][i] == WordMinLeer) {
         break;
       } else {
-        lightup(WordMinutenSemiExact[minute - 1][i], this->foregroundColor, debug);
+        lightup(WordMinutenSemiExact[minute - 1][i], this->foregroundColor, skip);
       }
     }
     if ((minute > 0 && minute < 23) || (minute <= 37 && minute > 30)) {
-      lightup(WordNach, this->foregroundColor, debug);
+      lightup(WordNach, this->foregroundColor, skip);
     }
     if (minute > 37 || (minute >= 23 && minute < 30)) {
-      lightup(WordVor, this->foregroundColor, debug);
+      lightup(WordVor, this->foregroundColor, skip);
     }
     if (minute >= 23 && minute <= 37) {
-      lightup(WordHalb, this->foregroundColor, debug);
+      lightup(WordHalb, this->foregroundColor, skip);
     }
   }
 }
@@ -186,52 +177,73 @@ void WordLayout::showMinuteSemiExact(bool debug) {
 /**
  * Sets pixels for the current minutes values
  */
-void WordLayout::showMinuteLocatorSemiExact(bool debug) {
+void WordLayout::showMinuteLocatorSemiExact(bool skip) {
   if ((minute > 15 && minute < 18) ||
       (minute > 20 && minute < 23) ||
       (minute > 35 && minute < 38) ||
       (minute > 40 && minute < 43) ||
       (minute > 45 && minute < 48)) {
-    lightup(WordGewesen, this->foregroundColor, debug);
+    lightup(WordGewesen, this->foregroundColor, skip);
   }
 }
 
-void WordLayout::displayTime(bool debug) {
-  blank();
+void WordLayout::update() {
+  #ifdef WORDCLOCK_BRIGHTNESS_SENSOR
+    this->powerdraw = 0;
+    this->setPixels(true);
+
+    int light_sensor = analogRead(A0);
+    byte brightness = byte(this->autoBrightness.refresh(light_sensor) * 1.4);
+    byte maxed_brightness = byte(float(brightness) / (max(float(maxPowerdraw), float(this->powerdraw)) / float(maxPowerdraw)));
+    #ifdef WORDCLOCK_SERIAL_DEBUG
+    Serial.print("| LIGHT: ");
+    Serial.print(light_sensor);
+    Serial.print(" | POWER: ");
+    Serial.print(this->powerdraw);
+    Serial.print(" | AVG: ");
+    Serial.print(brightness);
+    Serial.print(" | LUM: ");
+    Serial.print(maxed_brightness);
+    #endif
+    this->setPixels();
+    this->pixels.setBrightness(maxed_brightness);
+  #endif
+  #ifndef WORDCLOCK_BRIGHTNESS_SENSOR
+    this->pixels.setBrightness(PIXEL_BRIGHTNESS);
+  #endif
+  this->pixels.show();
+}
+
+void WordLayout::setPixels(bool skip) {
+  blank(skip);
 
   // light up "it's" it stays on
-  lightup(WordEs, this->foregroundColor, debug);
-  lightup(WordIst, this->foregroundColor, debug);
+  lightup(WordEs, this->foregroundColor, skip);
+  lightup(WordIst, this->foregroundColor, skip);
 
   // Light up minutes
-  if (exact == 0) {
-    showMinute(debug);
-  } else if (exact == 1) {
-    showMinuteSemiExact(debug);
+  if (exact == 1) {
+    showMinuteSemiExact(skip);
   } else if (exact == 2) {
-    showMinuteExact(debug);
+    showMinuteExact(skip);
   }
 
   // light up hours
   if (exact != 1) {
-    showHour(debug);
+    showHour(skip);
   } else {
-    showHourSemiExact(debug);
+    showHourSemiExact(skip);
   }
 
   if (hour % 12 >= 6 && hour % 12 < 9) {
-    lightup(SymbolElephant, Blue, debug);
+    lightup(SymbolElephant, MediumBlue, skip);
   } else if (hour > 20 || hour < 6) {
-    lightup(SymbolCat, Blue, debug);
+    lightup(SymbolCat, MediumBlue, skip);
   }
 
   if (exact == 1) {
-    showMinuteLocatorSemiExact(debug);
+    showMinuteLocatorSemiExact(skip);
   }
-
-  displayWifiStatus();
-
-  display(debug);
 }
 
 void WordLayout::setupDisplay() {
@@ -239,49 +251,33 @@ void WordLayout::setupDisplay() {
   backgroundColor = Black;
   //foregroundColor = DarkerWhite;
   //foregroundColor = BrightWhite;
-  foregroundColor = MediumWhite;
+  foregroundColor = BrightWhite;
   wipe();
 }
 
-
-void WordLayout::lightup(int *Word, uint32_t Color, bool debug) {
+void WordLayout::lightup(int *Word, uint32_t Color, bool skip) {
   for (int x = 0; x < pixels.numPixels() + 1; x++) {
+    #ifdef WORDCLOCK_BRIGHTNESS_SENSOR
+    this->powerdraw += mapToPowerdraw(Color);
+    #endif
     if (Word[x] == -1) {
-      if (debug) {
-        Serial.print(" ");
-      }
+      #ifdef WORDCLOCK_SERIAL_DEBUG
+      Serial.print(" ");
+      #endif
       break;
     } else {
-      this->pixels.setPixelColor(Word[x], Color);
-      if (debug) {
-        Serial.print(wordstring.at(Word[x]));
+      #ifdef WORDCLOCK_SERIAL_DEBUG
+      Serial.print(wordstring.at(Word[x]));
+      #endif
+      if(!skip) {
+        this->pixels.setPixelColor(Word[x], Color);
       }
     }
   }
 }
 
-void WordLayout::display(bool debug) {
-  int light_sensor = analogRead(A0);
-  Serial.print(" | LIGHT: ");
-  Serial.print(light_sensor);
-  int brightness = this->autoBrightness.refresh();
-  Serial.print(" | AVG: ");
-  Serial.print(brightness);
-  this->pixels.setBrightness(brightness);
-
-  this->pixels.show();
-}
-
-void WordLayout::debug() {
-  Serial.println();
-  Serial.print("AVG_LIGHTNESS: ");
-  Serial.println(this->autoBrightness.averarge_light());
-  Serial.print("SCALED_BRIGHTNESS: ");
-  Serial.println(this->autoBrightness.scaled_brightness());
-}
-
 /**
- * Zeigt den Status des
+ * Shows the status of the WiFI connection
  * @param Color
  * @param duration
  */
@@ -290,16 +286,4 @@ void WordLayout::setWifiStatus(uint32_t Color, int duration) {
   wifiColor = Color;
   lightup(SymbolWifi, wifiColor);
   this->pixels.show();
-}
-
-void WordLayout::displayWifiStatus() {
-  if (wifiWait > 0) {
-    wifiWait--;
-    display();
-  } else if (wifiWait == 0) {
-    wifiColor = Black;
-    wifiWait = -1;
-    lightup(SymbolWifi, wifiColor);
-    display();
-  }
 }

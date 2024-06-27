@@ -1,5 +1,9 @@
+#include <SPI.h>
 #include <Adafruit_NeoPixel.h>
+#include "settings.h"
+#ifdef WORDCLOCK_BRIGHTNESS_SENSOR
 #include "auto_brightness.h"
+#endif
 
 #ifndef WordLayout_h
 #define WordLayout_h
@@ -8,23 +12,23 @@
 static uint32_t Black = Adafruit_NeoPixel::Color(0, 0, 0);
 static uint32_t White = Adafruit_NeoPixel::Color(49, 52, 34);
 static uint32_t BrightWhite = Adafruit_NeoPixel::Color(255, 255, 200);
-static uint32_t MediumWhite = Adafruit_NeoPixel::Color(125, 125, 100);
-static uint32_t DarkWhite = Adafruit_NeoPixel::Color(36, 39, 25);
-static uint32_t DarkerWhite = Adafruit_NeoPixel::Color(24, 26, 17);
+//static uint32_t MediumWhite = Adafruit_NeoPixel::Color(125, 125, 100);
+//static uint32_t DarkWhite = Adafruit_NeoPixel::Color(36, 39, 25);
+//static uint32_t DarkerWhite = Adafruit_NeoPixel::Color(24, 26, 17);
 static uint32_t DarkestWhite = Adafruit_NeoPixel::Color(12, 13, 8);
 static uint32_t Green = Adafruit_NeoPixel::Color(10, 90, 0);
-static uint32_t DarkGreen = Adafruit_NeoPixel::Color(5, 45, 0);
-static uint32_t DarkestGreen = Adafruit_NeoPixel::Color(1, 9, 0);
-static uint32_t Red = Adafruit_NeoPixel::Color(90, 0, 0);
+//static uint32_t DarkGreen = Adafruit_NeoPixel::Color(5, 45, 0);
+//static uint32_t DarkestGreen = Adafruit_NeoPixel::Color(1, 9, 0);
+//static uint32_t Red = Adafruit_NeoPixel::Color(90, 0, 0);
 static uint32_t MediumBlue = Adafruit_NeoPixel::Color(0, 40, 170);
 static uint32_t Blue = Adafruit_NeoPixel::Color(0, 20, 85);
-static uint32_t DarkBlue = Adafruit_NeoPixel::Color(0, 10, 40);
-static uint32_t DarkestBlue = Adafruit_NeoPixel::Color(0, 8, 20);
+//static uint32_t DarkBlue = Adafruit_NeoPixel::Color(0, 10, 40);
+//static uint32_t DarkestBlue = Adafruit_NeoPixel::Color(0, 8, 20);
 
 
 static int WordEs[] = {0, 1, -1};
 static int WordIst[] = {3, 4, 5, 6, -1};
-static int WordBereits[] = {4, 5, 6, 7, -1};
+//static int WordBereits[] = {4, 5, 6, 7, -1};
 static int WordUngefaehr[] = {8, 9, 10, 11, -1};
 static int WordHalb[] = {95, 94, 93, 92, 91, -1};
 static int WordMeister[] = {49, 50, 51, 52, 53, 54, 55, -1};
@@ -38,9 +42,9 @@ static int WordNach[] = {78, 79, -1};
 static int WordVor[] = {80, 81, 82, -1};
 static int WordGewesen[] = {134, 133, 132, -1};
 static int WordBald[] = {23, 22, 21, -1};
-static int WordNein[] = {20, 19, 18, -1};
-static int WordJa[] = {77, 78, -1};
-static int WordAeuae[] = {115, 124, 138, -1};
+//static int WordNein[] = {20, 19, 18, -1};
+//static int WordJa[] = {77, 78, -1};
+//static int WordAeuae[] = {115, 124, 138, -1};
 
 static int SymbolWifi[] = {107, -1};
 static int SymbolElephant[] = {119, -1};
@@ -83,7 +87,7 @@ static int WordMinElf[] = {33, 34, 35, -1};
 static int WordMinZwolf[] = {47, 46, 45, 44, 43, -1};
 static int WordMinDreizehn[] = {71, 70, 51, 75, 76, -1};
 static int WordMinVierzehn[] = {17, 16, 15, 14, 75, 76, -1};
-static int WordMinFuenfzehn[] = {43, 42, 41, 75, 76, -1};
+//static int WordMinFuenfzehn[] = {43, 42, 41, 75, 76, -1};
 static int WordMinViertel[] = {17, 16, 15, 14, 13, 12, -1};
 static int WordMinSechzehn[] = {75, 76, -1};
 static int WordMinSiebzehn[] = {75, 76, -1};
@@ -94,11 +98,11 @@ static int WordMinEinunzwanzig[] = {24, 25, 68, 67, 66, 65, 64, 63, 62, 61, -1};
 static int WordMinZweinunzwanzig[] = {47, 46, 45, 51, 67, 66, 65, 64, 63, 62, 61, -1};
 static int WordMinDreiunzwanzig[] = {71, 70, 69, 67, 66, 65, 64, 63, 62, 61, -1};
 static int WordMinVierunzwanzig[] = {17, 16, 15, 14, 67, 66, 65, 64, 63, 62, 61, -1};
-static int WordMinFuenfunzwanzig[] = {43, 42, 41, 67, 66, 65, 64, 63, 62, 61, -1};
-static int WordMinSechsunzwanzig[] = {26, 27, 28, 29, 30, 67, 66, 65, 64, 63, 62, 61, -1};
-static int WordMinSiebenunzwanzig[] = {30, 31, 32, 33, 68, 67, 66, 65, 64, 63, 62, 61, -1};
-static int WordMinAchtunzwanzig[] = {39, 38, 37, 36, 67, 66, 65, 64, 63, 62, 61, -1};
-static int WordMinNeununzwanzig[] = {72, 73, 74, 67, 66, 65, 64, 63, 62, 61, -1};
+//static int WordMinFuenfunzwanzig[] = {43, 42, 41, 67, 66, 65, 64, 63, 62, 61, -1};
+//static int WordMinSechsunzwanzig[] = {26, 27, 28, 29, 30, 67, 66, 65, 64, 63, 62, 61, -1};
+//static int WordMinSiebenunzwanzig[] = {30, 31, 32, 33, 68, 67, 66, 65, 64, 63, 62, 61, -1};
+//static int WordMinAchtunzwanzig[] = {39, 38, 37, 36, 67, 66, 65, 64, 63, 62, 61, -1};
+//static int WordMinNeununzwanzig[] = {72, 73, 74, 67, 66, 65, 64, 63, 62, 61, -1};
 
 static int *WordMinuten[] = {WordMinFunf, WordMinZehn, WordMinViertel, WordMinZwanzig, WordMinFunf};
 
@@ -185,7 +189,9 @@ public:
 
     void connectWLAN();
 
-    void displayTime(bool debug = false);
+    void update();
+
+    void setPixels(bool skip = false);
 
     /**
      * Runs through all pixels
@@ -199,14 +205,6 @@ public:
      */
     void showLogo(uint32_t color);
 
-    /**
-     * Checks if pixel should be hidden
-     * @param color
-     */
-    bool hidePixel(int pixel);
-
-    void hidePixelRec(int index, int depth);
-
     void showWifiSuccess();
 
     /**
@@ -214,41 +212,36 @@ public:
      * @param Word array of the id of the pixel
      * @param Color
      */
-    void lightup(int *Word, uint32_t Color, bool debug = false);
-
-    void display(bool debug = false);
+    void lightup(int *Word, uint32_t Color, bool skip = false);
 
     void setWifiStatus(uint32_t Color, int time = 1250);
-
-    void displayWifiStatus();
 
     /**
      * Sets all pixels to the background
      */
-    void blank();
+    void blank(bool skip = false);
 
     /**
      * Sets all pixels to the background and displays it
      */
     void wipe();
 
-    void debug();
-
 private:
-    Adafruit_NeoPixel pixels = Adafruit_NeoPixel(144, D7, NEO_GRB + NEO_KHZ800);
+    Adafruit_NeoPixel pixels = Adafruit_NeoPixel(144, WORDCLOCK_NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
+    #ifdef WORDCLOCK_BRIGHTNESS_SENSOR
     AutoBrightness autoBrightness = AutoBrightness();
+    #endif
+    int powerdraw = 0;
 
-    void showMinute(bool debug = false);
+    void showMinuteSemiExact(bool skip = false);
 
-    void showMinuteSemiExact(bool debug = false);
+    void showMinuteExact(bool skip = false);
 
-    void showMinuteExact(bool debug = false);
+    void showMinuteLocatorSemiExact(bool skip = false);
 
-    void showMinuteLocatorSemiExact(bool debug = false);
+    void showHour(bool skip = false);
 
-    void showHour(bool debug = false);
-
-    void showHourSemiExact(bool debug = false);
+    void showHourSemiExact(bool skip = false);
 };
 
 #endif
