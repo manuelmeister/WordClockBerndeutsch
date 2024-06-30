@@ -11,6 +11,11 @@ and others
 This version uses a DS3231 RTC clock module to store the time and date 
 and a LDR (photoresistor) to adjust the brightness of the LEDs.
 
+If you are looking for the old versions, you can find them here:  
+[![Legacy Version - Arduino](https://img.shields.io/badge/Legacy_Version-Arduino_(.ino)-2ea44f)](https://github.com/manuelmeister/WordClockBerndeutsch/tree/legacy-version)
+[![Legacy Version - Platformio](https://img.shields.io/badge/Legacy_Version-Platformio_(.cpp)-f5822a)](https://github.com/manuelmeister/WordClockBerndeutsch/tree/ino-version)
+
+
 ## Install
 
 Setup [Platformio](https://docs.platformio.org/en/latest/core/quickstart.html) and install dependencies with:  
